@@ -40,7 +40,7 @@ app.use("/images", express.static(__dirname + "/public/images"));
   ROUTES 
 */
 
-var routes = require('./routes');
+require('./api/api.js')(app, mongoose);
 
 // load the socket API and pass in our server & io object
 //require('./api/twitterAPI.js')(twitter, io);
