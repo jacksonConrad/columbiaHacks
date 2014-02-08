@@ -6,8 +6,8 @@ port        = process.env.PORT || 3000,
 server      = require('http').createServer(app);
 
 // Require dependencies
-var mongoose= require('mongoose'),
-request     = require('request');
+var mongoose= require('mongoose');
+
 
 var configDB = require('./config/database.js');
 
