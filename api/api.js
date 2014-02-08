@@ -1,5 +1,8 @@
 //The API of your application
 
+var request = require('request'),
+_           = require('underscore');
+
 module.exports = function(app) {
 
 	// Make recursive API calls to soundcloud
@@ -14,8 +17,9 @@ module.exports = function(app) {
 		// if they have >10,000 followers:
 		// check if they are in db.
 		// if not, make them a node		
-		// create an edge between child and parent node
-		// if they have <10,000 followers, make 
+		// create an edge or iterate the edge value between child and parent node
+		// if they have <10,000 followers 
+		// if we aren't at the last level, recursion
 
 
 
