@@ -6,18 +6,28 @@ async       = require('async'),
 ArtistNode  = require('./models/ArtistNode'),
 Edge        = require('./models/Edge');
 
-var baseURL  = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/';
+var userURL  = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/';
 var clientID = '&client_id=ee6c012d3805b479acf430ce6e188fa5';
-var followerURL = 'http://api.soundcloud.com/users/';
+var baseURL = 'http://api.soundcloud.com/users/';
 
 module.exports = function(app, mongoose) {
 
 	// Make recursive API calls to soundcloud
 	// Create graph of connections according to users/:id/followings
-	app.get('/api/user/:username/:levels', function(req, res) {
+	app.get('/api/user/:username/:depth', function(req, res) {
+
+
+
+
+
+
+
+		
+		depthSearch(depth, node);
+
 
 		// initial user ID request
-		request(baseURL + req.params.username + clientID, 'json', function (error, response, body) {
+		request(userURL + req.params.username + clientID, 'json', function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 			  	var user = JSON.parse(body);
 
@@ -40,7 +50,7 @@ module.exports = function(app, mongoose) {
 			    				console.log('niggabitch');
 
 			    				// GET request for user's favorite tracks
-			    				request(followerURL + user.id + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5',
+			    				request(baseURL + user.id + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5',
     								function (error, response, body) {
 
 
@@ -49,12 +59,12 @@ module.exports = function(app, mongoose) {
     							);
 
 			    				// API call for user/:id/followings
-			    				request(followerURL + user.id + '/followings.json?client_id=ee6c012d3805b479acf430ce6e188fa5',
+			    				request(baseURL + user.id + '/followings.json?client_id=ee6c012d3805b479acf430ce6e188fa5',
 			    					function (error, response, body) {
 			    						
 			    						
 
-			    						request(followerURL + user.id + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5',
+			    						request(baseURL + user.id + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5',
 		    								function (error, response, body) {
 		    									var results = JSON.parse(body);
 		    									res.json(results);
@@ -103,14 +113,7 @@ module.exports = function(app, mongoose) {
 	});
 }
 
-
-function findByID (id, callback) {
-	ArtistNode.findOne({'id': id}, 'id username', function (err, result) {
-		if (result == null) {
-			// create user for DB
-		}
-		else {
-			// Find associated edges, and child nodes associated with those edges
+		/*	// Find associated edges, and child nodes associated with those edges
 			// If leaf, go more deeper
 			if (countOutgoingEdges(result.id) == 0) {
 				// go deeper
@@ -119,14 +122,47 @@ function findByID (id, callback) {
 				// return edges & child nodes
 				findOutgoingEdges (id, function (result) {
 
-				});
-			}
-			
-			
-			console.log('artist already in DB');
-
+				});*/
+function getSCFavorites (userID, clientID, callback) {
+	request(baseURL + userID + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5', 'json', function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+		  	var favorites = JSON.parse(body);
+		  	return favorites;
 		}
-		callback(result);
+	});
+}
+
+function getSCUser (permalink, clientID, callback) {
+	request(userURL + permalink + clientID, 'json', function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+		  	var user = JSON.parse(body);
+		  	return user;
+		}
+	});
+}
+
+
+
+function findByID (id, callback) {
+	ArtistNode.findOne({'id': id}, 'id username', function (err, result) {
+		if (result == null) {
+			// create user for DB and return user
+		}
+		else {
+			// return user
+			return result;
+		}
+			console.log('artist already in DB');
+		
+	});
+}
+
+function createArtistNode(id, callback) {
+	ArtistNode.create({
+		id: user.id,
+		username: user.username
+	}, function (err, result) {
+		return result;
 	});
 }
 
@@ -137,11 +173,18 @@ function findOutgoingEdges (id, callback) {
 	});
 }
 
+
+
 // Count all the edges coming out of a node
 function countOutgoingEdges (id, callback) {
 	Edge.count({'nodeA': id}, function (err, count) {
 		return count;
 	});
+}
+
+function depthSearch (user, callback) {
+	findByID	
+
 }
 
 

@@ -3,7 +3,8 @@ Schema       = mongoose.Schema;
 
 var artistNodeSchema = new Schema({
 	id: Number,
-	username: String
+	username: String,
+	songURL: String
 	// following: [{type: Schema.Types.ObjectId, ref: 'ArtistNode'}]
 });
 
