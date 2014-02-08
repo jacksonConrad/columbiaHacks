@@ -15,6 +15,12 @@ var configDB = require('./config/database.js');
 
 mongoose.connect(configDB.url); // connect to our database
 
+
+// MODELS
+
+var Edge = require('./api/models/Edge.js');
+var ArtistNode = require('./api/models/ArtistNode.js');
+
 // set up our express application
 app.use(express.logger('dev')); // log every request to the console
 app.use(express.bodyParser()); // get information from html forms
@@ -34,9 +40,7 @@ app.use("/images", express.static(__dirname + "/public/images"));
   ROUTES 
 */
 
-var routes = require('/routes');
-
-
+var routes = require('./routes');
 
 // load the socket API and pass in our server & io object
 //require('./api/twitterAPI.js')(twitter, io);
