@@ -1,17 +1,60 @@
-//The server or backbone of your app. 
-
-//Require any node libraries here
 var express = require('express'),
-api = require('./api');
+app         = express(),
+port        = process.env.PORT || 3000,
+// Create the HTTP server with the express app as an argument
+// to pass to io object
+server      = require('http').createServer(app);
 
-var app = express();
+// Require dependencies
+var mongoose= require('mongoose'),
+request     = require('request');
+
+var configDB = require('./config/database.js');
+
+// Configuration
+
+mongoose.connect(configDB.url); // connect to our database
+
+// set up our express application
+app.use(express.logger('dev')); // log every request to the console
+app.use(express.bodyParser()); // get information from html forms
 
 // Serve static files
-app.use('/', express.static(__dirname + "/"));
+// 
+// // Serve static files
+ 
+app.set('port', port);
+app.use("/js", express.static(__dirname + "/public/js"));
+app.use("/css", express.static(__dirname + "/public/css"));
+app.use("/partials", express.static(__dirname + "/public/partials"));
+app.use("/lib", express.static(__dirname + "/public/lib"));
+app.use("/images", express.static(__dirname + "/public/images"));
 
-//Call the API functions here. Use REST http requests from angular
-app.get('/api/getHere', api.getFunction);
+/* 
+  ROUTES 
+*/
 
-//In your browser, go to http://localhost:3000
-app.listen(3000);
-console.log("Listening on port 3000");
+var routes = require('/routes');
+
+
+
+// load the socket API and pass in our server & io object
+//require('./api/twitterAPI.js')(twitter, io);
+
+// load the stat API
+//require('./api/statAPI.js')(app, io);
+
+// redirect all others to the index (HTML5 history)
+// essentially links up all the angularjs partials with their respective paths
+app.all("/*", function(req, res, next) {
+  //console.log('loading page');
+  res.sendfile("index.html", { root: __dirname + "/public" });
+});
+
+// LAUNCH *********************************************/
+
+
+//Create the server
+server.listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port') );
+});
