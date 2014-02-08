@@ -1,4 +1,10 @@
-express-angularjs-seed
+
 ======================
 
-Express Angularjs Seed without jade. no templating system, uses straightforward html. 
+DevFest Hackathon Spring 2014 Project
+
+Collaborators: 	Dan Friedman
+				Jackson Foley
+				Brian Yamamoto
+
+This project will use graphs and stuff.
