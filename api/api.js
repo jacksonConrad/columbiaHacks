@@ -17,30 +17,46 @@ module.exports = function(app, mongoose) {
 	app.get('/api/user/:username/:depth', function(req, res) {
 
 		var root = {};
+		var node = {};
+		var data = {
+			nodes: [],
+			edges: []
+		};
 
 		async.series([
-			function () {
+			function (callback) {
 				var root = getSCUser(req.params.username, clientID);
+				console.log('FIRST SYNC');
+				callback(null);
+				//next();
 			},
-			function () {
+			function (callback) {
 				var node = findByID(root.id);
+				console.log('FIRST SYNC');
+				callback(null);
 			},
-			function () {
+			function (callback) {
 				if ( countOutgoingEdges(node.id) ) {
 					// don't process (for now)
+					console.log('outgoing edges exist! dont process');
 				}
 				else {
 					// process favorites
-					getSCFavorites(node.id, clientID function (children) {
+					console.log('process this fuckers favorite shitz');
+					getSCFavorites(node.id, clientID, function (children) {
 						data.nodes = children;
 						createEdges(node, favorites, function () {
 							data.edges = findOutgoingEdges(node.id);
-						}
+							console.log('created the edges bitch');
+						});
 					});
 				}
+				callback(null);
 			},
-			function () {
+			function (callback) {
 				// aggregate data to send to front end
+				console.log('I\'M ABOUT TO JIZZ');
+
 				data.nodes.push(node);
 				// data =
 				// 		{
@@ -55,6 +71,7 @@ module.exports = function(app, mongoose) {
 				// 			}
 				// 		}
 				res.json(data);
+				callback(null);
 			}]
 		);
 	});
@@ -75,6 +92,8 @@ function getSCUser (permalink, clientID, callback) {
 	request(userURL + permalink + clientID, 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var user = JSON.parse(body);
+		  	console.log('GOT USER!!!!!');
+		  	console.dir(user);
 		  	return user;
 		}
 	});
@@ -97,10 +116,10 @@ function findByID (id, callback) {
 	});
 }
 
-function createArtistNode(id, callback) {
+function createArtistNode(userId, userUsername, callback) {
 	ArtistNode.create({
-		id: user.id,
-		username: user.username
+		id: userId,
+		username: userUsername
 	}, function (err, result) {
 		return result;
 	});
