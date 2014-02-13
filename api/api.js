@@ -6,6 +6,12 @@ async       = require('async'),
 ArtistNode  = require('./models/ArtistNode'),
 Edge        = require('./models/Edge');
 
+
+// Require our custom soundcloud and graph functions
+//
+// require(./graphAPI);
+// require(./soundcloudAPI);
+
 var userURL  = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/';
 var clientID = '&client_id=ee6c012d3805b479acf430ce6e188fa5';
 var baseURL = 'http://api.soundcloud.com/users/';
@@ -57,13 +63,13 @@ module.exports = function(app, mongoose) {
 				}
 				else {
 					// process favorites
-					console.log('process this fuckers favorite shitz');
+					console.log('process this users favorite artists');
 					
 					getSCFavorites(node.id, clientID, function (err, children) {
 						data.nodes = children;
 						createEdges(node, children, function () {
 							data.edges = findOutgoingEdges(node.id);
-							console.log('created the edges bitch');
+							console.log('get or create the edges');
 						});
 					});
 				}
@@ -144,7 +150,7 @@ function findOutgoingEdges (id, callback) {
 // Count all the edges coming out of a node
 function countOutgoingEdges (id, callback) {
 	Edge.count({'nodeA': id}, function (err, count) {
-		console.log('penis' + count);
+		console.log('count: ' + count);
 		return count;
 	});
 }
