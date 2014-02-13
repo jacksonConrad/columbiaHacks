@@ -1,8 +1,30 @@
 body {
-  padding: 50px;
+  width:100%;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
+}
+
+p {
+margin:0;
+}
+
+.pure-form {
+margin: 1em;
+width: 100%;
+display: inline-block;
+text-align: center;
+z-index:1;
+}
+
+.node {
+stroke: #fff;
+stroke-width: 1.5px;
+}
+
+.link {
+stroke: #999;
+stroke-opacity: .6;
 }

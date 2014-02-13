@@ -25,24 +25,37 @@ module.exports = function(app, mongoose) {
 
 		async.series([
 			function (callback) {
-				var root = getSCUser(req.params.username, clientID);
-				console.log('FIRST SYNC');
-				callback(null);
+				root = getSCUser(req.params.username, clientID);
+				console.log();
+				callback(null, 'first');
 				//next();
 			},
 			function (callback) {
-				var node = findByID(root.id);
+				node = findByID(root.id);
 				console.log('FIRST SYNC');
-				callback(null);
+				console.log(node);
+				callback(null, node);
 			},
 			function (callback) {
-				if ( countOutgoingEdges(node.id) ) {
+
+				callback(null, 'three');
+			},
+			function (callback, results) {
+				// aggregate data to send to front end
+				_.each(results, function (thing) {
+					console.log(thing);
+				});
+
+				console.log(results[1].id);
+
+				if ( countOutgoingEdges(results[1].id) ) {
 					// don't process (for now)
 					console.log('outgoing edges exist! dont process');
 				}
 				else {
 					// process favorites
 					console.log('process this fuckers favorite shitz');
+					
 					getSCFavorites(node.id, clientID, function (children) {
 						data.nodes = children;
 						createEdges(node, favorites, function () {
@@ -51,11 +64,6 @@ module.exports = function(app, mongoose) {
 						});
 					});
 				}
-				callback(null);
-			},
-			function (callback) {
-				// aggregate data to send to front end
-				console.log('I\'M ABOUT TO JIZZ');
 
 				data.nodes.push(node);
 				// data =
@@ -77,6 +85,17 @@ module.exports = function(app, mongoose) {
 	});
 }
 
+function getSCUser (permalink, clientID, callback) {
+	request(userURL + permalink + clientID, 'json', function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+		  	var user = JSON.parse(body);
+		  	console.log('GOT USER!!!!!');
+		  	//console.dir(user);
+		  	return user;
+		}
+	});
+}
+
 function getSCFavorites (userID, clientID, callback) {
 	request(baseURL + userID + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5', 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
@@ -88,19 +107,6 @@ function getSCFavorites (userID, clientID, callback) {
 	});
 }
 
-function getSCUser (permalink, clientID, callback) {
-	request(userURL + permalink + clientID, 'json', function (error, response, body) {
-		if (!error && response.statusCode == 200) {
-		  	var user = JSON.parse(body);
-		  	console.log('GOT USER!!!!!');
-		  	console.dir(user);
-		  	return user;
-		}
-	});
-}
-
-
-
 function findByID (id, callback) {
 	ArtistNode.findOne({'id': id}, 'id username', function (err, result) {
 		if (result == null) {
@@ -109,10 +115,9 @@ function findByID (id, callback) {
 		}
 		else {
 			// return user
+			console.log('artist already in DB');
 			return result;
 		}
-			console.log('artist already in DB');
-		
 	});
 }
 
@@ -131,8 +136,6 @@ function findOutgoingEdges (id, callback) {
 		return result;
 	});
 }
-
-
 
 // Count all the edges coming out of a node
 function countOutgoingEdges (id, callback) {
