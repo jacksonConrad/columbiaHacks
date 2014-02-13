@@ -6,7 +6,9 @@ async       = require('async'),
 ArtistNode  = require('./models/ArtistNode'),
 Edge        = require('./models/Edge');
 
+
 // Require our custom soundcloud and graph functions
+//
 // require(./graphAPI);
 // require(./soundcloudAPI);
 
@@ -152,7 +154,11 @@ function findOutgoingEdges (id, callback) {
 // Count all the edges coming out of a node
 function countOutgoingEdges (id, callback) {
 	Edge.count({'nodeA': id}, function (err, count) {
+<<<<<<< HEAD
 		console.log('count' + count);
+=======
+		console.log('count: ' + count);
+>>>>>>> 067e018b3d45c97ac492be0a94249a0587a16417
 		return count;
 	});
 }
