@@ -16,37 +16,39 @@ module.exports = function(app, mongoose) {
 	// Create graph of connections according to users/:id/followings
 	app.get('/api/user/:username/:depth', function(req, res) {
 
-		var root = {};
+		var root;
 		var node = {};
 		var data = {
 			nodes: [],
 			edges: []
 		};
+		var x = 0;
 
 		async.series([
 			function (callback) {
-				root = getSCUser(req.params.username, clientID);
-				console.log();
-				callback(null, 'first');
-				//next();
+				getSCUser(req.params.username, clientID, function (err, result) {
+					console.log('first function:' + result);
+					root = result;
+					callback(null, 'first');					
+				});
 			},
 			function (callback) {
-				node = findByID(root.id);
-				console.log('FIRST SYNC');
-				console.log(node);
-				callback(null, node);
+				findByID(root.id, function (err, result) {
+					node = result;
+					console.log('second function: ' + node);
+					callback(null, node);
+				});
 			},
 			function (callback) {
 
 				callback(null, 'three');
-			},
+			}
+			],
 			function (callback, results) {
 				// aggregate data to send to front end
 				_.each(results, function (thing) {
-					console.log(thing);
+					//console.log(thing);
 				});
-
-				console.log(results[1].id);
 
 				if ( countOutgoingEdges(results[1].id) ) {
 					// don't process (for now)
@@ -56,9 +58,9 @@ module.exports = function(app, mongoose) {
 					// process favorites
 					console.log('process this fuckers favorite shitz');
 					
-					getSCFavorites(node.id, clientID, function (children) {
+					getSCFavorites(node.id, clientID, function (err, children) {
 						data.nodes = children;
-						createEdges(node, favorites, function () {
+						createEdges(node, children, function () {
 							data.edges = findOutgoingEdges(node.id);
 							console.log('created the edges bitch');
 						});
@@ -79,8 +81,7 @@ module.exports = function(app, mongoose) {
 				// 			}
 				// 		}
 				res.json(data);
-				callback(null);
-			}]
+			}
 		);
 	});
 }
@@ -91,7 +92,7 @@ function getSCUser (permalink, clientID, callback) {
 		  	var user = JSON.parse(body);
 		  	console.log('GOT USER!!!!!');
 		  	//console.dir(user);
-		  	return user;
+		  	callback(null, user);
 		}
 	});
 }
@@ -102,7 +103,7 @@ function getSCFavorites (userID, clientID, callback) {
 		  	var favorites = JSON.parse(body);
 		  	// create edges
 
-		  	return favorites;
+		  	callback(null, favorites);
 		}
 	});
 }
@@ -116,7 +117,7 @@ function findByID (id, callback) {
 		else {
 			// return user
 			console.log('artist already in DB');
-			return result;
+			callback(null, result);
 		}
 	});
 }
@@ -140,7 +141,7 @@ function findOutgoingEdges (id, callback) {
 // Count all the edges coming out of a node
 function countOutgoingEdges (id, callback) {
 	Edge.count({'nodeA': id}, function (err, count) {
-		console.log(count);
+		console.log('penis' + count);
 		return count;
 	});
 }

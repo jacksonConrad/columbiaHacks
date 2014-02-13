@@ -26,7 +26,8 @@ angular.module('myApp.directives', ['d3'])
 
 					var svg = d3.select("body")
 						.append("svg")
-					  .style("width", "100%");
+					  .style("width", "400px")
+					  .style("height", "400px");
 
 
 	        // Browser onresize event
@@ -406,7 +407,7 @@ angular.module('myApp.directives', ['d3'])
 							      .data(data.nodes)
 							    .enter().append("circle")
 							      .attr("class", "node")
-							      .attr("r", 5)
+							      .attr("r", 6)
 							      .style("fill", function(d) { return color(d.group); })
 							      .call(force.drag);
 
