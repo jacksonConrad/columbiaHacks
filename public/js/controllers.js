@@ -4,11 +4,11 @@
 
 angular.module('myApp.controllers', ['d3'])
 	.controller('AppCtrl', function ($scope, $http) {
-		$scope.getuser = function() {
-	        $http({ method: 'GET', url: 'api/user/vampire-weekend/2' //+ $scope.user.name + '/' + $scope.user.depth //document.getElementsByTagName('input')[0].value + '/' + document.getElementsByTagName('select')[0].value
-			}).success(function (data, status, headers, config) {
-				$scope.data = data;
-			}).error(function (data, status, headers, config) {
+		$scope.discover = function() {
+	        $http({ method: 'GET', url: 'api/user/' + $scope.user.name + '/' + $scope.user.depth
+				}).success(function (data, status, headers, config) {
+					$scope.data = data;
+				}).error(function (data, status, headers, config) {
 				$scope.name = 'Error!'
 			});
 	  };

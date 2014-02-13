@@ -27,20 +27,21 @@ module.exports = function(app, mongoose) {
 		async.series([
 			function (callback) {
 				getSCUser(req.params.username, clientID, function (err, result) {
-					console.log('first function:' + result);
+					console.log('first function: ');
 					root = result;
 					callback(null, 'first');					
 				});
 			},
 			function (callback) {
+				console.log('second function');
+				console.log(root.id);
 				findByID(root.id, function (err, result) {
 					node = result;
-					console.log('second function: ' + node);
+					console.log(node);
 					callback(null, node);
 				});
 			},
 			function (callback) {
-
 				callback(null, 'three');
 			}
 			],
@@ -90,7 +91,8 @@ function getSCUser (permalink, clientID, callback) {
 	request(userURL + permalink + clientID, 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var user = JSON.parse(body);
-		  	console.log('GOT USER!!!!!');
+		  	console.log('user');
+		  	console.log(user);
 		  	//console.dir(user);
 		  	callback(null, user);
 		}
@@ -112,7 +114,8 @@ function findByID (id, callback) {
 	ArtistNode.findOne({'id': id}, 'id username', function (err, result) {
 		if (result == null) {
 			// create user for DB and return user
-			return createArtistNode(id);
+			var newNode = createArtistNode(id);
+			callback(null, newNode);
 		}
 		else {
 			// return user
