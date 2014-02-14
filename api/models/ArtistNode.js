@@ -6,7 +6,7 @@ var artistNodeSchema = new Schema({
 	username: String,
 	permalink: String,
 	songURL: String,
-	leaf: boolean
+	leaf: Boolean
 	// following: [{type: Schema.Types.ObjectId, ref: 'ArtistNode'}]
 });
 
