@@ -34,11 +34,14 @@ module.exports = function(app, mongoose) {
 			async.series([
 				// call recursive explore function to populate
 				// data.nodes & data.edges
-				exploreFromRoot(rootUser, req.params.depth)
+				exploreFromRoot(rootUser, req.params.depth, function () {
+					callback(null, 'done!');
+				})
 				],
 				// final callback
 				function (error, result) {
 					// send data
+					console.log('\n\nFINISHEDDDD!!!!!!!')
 					res.json('1');
 				}
 			);
