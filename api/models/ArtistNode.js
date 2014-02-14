@@ -4,7 +4,9 @@ Schema       = mongoose.Schema;
 var artistNodeSchema = new Schema({
 	id: Number,
 	username: String,
-	songURL: String
+	permalink: String,
+	songURL: String,
+	leaf: boolean
 	// following: [{type: Schema.Types.ObjectId, ref: 'ArtistNode'}]
 });
 

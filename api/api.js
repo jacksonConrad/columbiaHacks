@@ -22,84 +22,156 @@ module.exports = function(app, mongoose) {
 	// Create graph of connections according to users/:id/followings
 	app.get('/api/user/:username/:depth', function(req, res) {
 
-		var root;
-		var node = {};
 		var data = {
 			nodes: [],
 			edges: []
 		};
-		var x = 0;
 
-		async.series([
-			function (callback) {
-				getSCUser(req.params.username, clientID, function (err, result) {
-					console.log('root node: ');
-					root = result;
-					console.log(root);
-					callback(null, root);					
-				});
-			},
-			function (callback) {
-				console.log('root id: ');
-				console.log(root.id);
-				findByID(root.id, function (err, result) {
-					node = result;
-					console.log(node);
-					callback(null, node);
-				});
-			},
-			function (callback) {
-				callback(null, 'third');
-			}
-			],
-			function (callback, results) {
-				// aggregate data to send to front end
-				console.log('results');
-				_.each(results, function (thing) {
-					console.log(thing);
-				});
 
-				if ( countOutgoingEdges(results[1].id) ) {
-					// don't process (for now)
-					console.log('outgoing edges exist! dont process');
+		getSCUser(req.params.username, clientID, function (err, rootUser){
+			console.log('Got User');
+
+			async.series([
+				// call recursive explore function to populate
+				// data.nodes & data.edges
+				exploreFromRoot(rootUser, req.params.depth)
+				],
+				// final callback
+				function (error, result) {
+					// send data
+					res.json(data);
 				}
-				else {
-					// process favorites
-					console.log('process this users favorite artists');
-					
-					getSCFavorites(node.id, clientID, function (err, children) {
-						data.nodes = children;
-						createEdges(node, children, function () {
-							data.edges = findOutgoingEdges(node.id);
-							console.log('get or create the edges');
-						});
+			);
+		});
+
+			/*async.series([
+				function (callback) {
+					getSCUser(req.params.username, clientID, function (err, result) {
+						console.log('root node: ');
+						root = result;
+						console.log(root);
+						callback(null, root);					
 					});
+				},
+				function (callback) {
+					console.log('root id: ');
+					console.log(root.id);
+					queryUser(root.id, function (err, result) {
+						node = result;
+						console.log(node);
+						callback(null, node);
+					});
+				},
+				function (callback) {
+					callback(null, 'third');
 				}
+				],
+				function (callback, results) {
+					// aggregate data to send to front end
+					console.log('results');
+					_.each(results, function (thing) {
+						console.log(thing);
+					});
 
-				data.nodes.push(node);
-				// data =
-				// 		{
-				// 			nodes: {
-				// 				{}, 
-				// 				{}
-				// 			},
-				// 		
-				// 			edge: {
-				// 				{}, 
-				// 				{}
-				// 			}
-				// 		}
-				res.json(data);
-			}
-		);
+					if ( countOutgoingEdges(results[1].id) ) {
+						// don't process (for now)
+						console.log('outgoing edges exist! dont process');
+					}
+					else {
+						// process favorites
+						console.log('process this users favorite artists');
+						
+						getSCFavorites(node.id, clientID, function (err, children) {
+							data.nodes = children;
+							createEdges(node, children, function () {
+								data.edges = findOutgoingEdges(node.id);
+								console.log('get or create the edges');
+							});
+						});
+					}
+
+					data.nodes.push(node);
+					// data =
+					// 		{
+					// 			nodes: {
+					// 				{}, 
+					// 				{}
+					// 			},
+					// 		
+					// 			edge: {
+					// 				{}, 
+					// 				{}
+					// 			}
+					// 		}
+					res.json(data);
+				}
+			);*/
 	});
 }
 
+function exploreFromRoot (node, depth) {
+	if (depth != 0) {
+		// get array of JSON favorites
+		getSCFavorites(node.id, clientID, function (err, favorites) {
+			_.each(favorites, function (child) {
+				async.series([
+					// explore children of root
+					// populate data.nodes array
+					function (callback) {
+						queryUser(child, function(err, result) {
+							// append result to data.nodes to send to client
+							data.nodes.push(result);
+							if (result.leaf) {
+								// if its a leaf, explore
+								exploreFromRoot(result, depth - 1);
+							}
+							else {
+								return;
+							}
+						});
+					},
+					// populate data.edges array
+					function (callback) {
+						//createEdges(node, )
+
+					}], 
+					// final callback
+					function (err, results) {
+
+					}
+				);
+			});
+			
+		});
+			
+	}
+	else {
+		// if we don't explore it, mark as a leaf
+		node.leaf = true;
+	}
+		
+}
+
+
+
+
+// get user JSON object from soundcloud API
+/**
+ * get user JSON object from soundcloud API and return
+ * as ArtistNode object							
+ * @param  {String}   permalink [souncloud.com/<permalink>]
+ * @param  {[String]}   clientID  [piece of url for soundcloud API call]
+ * @param  {Function} callback  [returns an ArtistNode object as 2nd arg]
+ */
 function getSCUser (permalink, clientID, callback) {
 	request(userURL + permalink + clientID, 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var user = JSON.parse(body);
-		  	callback(null, user);
+		  	console.log(user);
+
+		  	queryUser(user, function (err, result) {
+		  		callback(null, result);
+		  	});
 		}
 	});
 }
@@ -108,23 +180,25 @@ function getSCFavorites (userID, clientID, callback) {
 	request(baseURL + userID + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5', 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var favorites = JSON.parse(body);
-		  	// create edges
-
 		  	callback(null, favorites);
 		}
 	});
 }
 
-function findByID (id, callback) {
-	var result = ArtistNode.findOne({'id': id}, {id: 1, username: 1});
-	if(result) {
-
-	}
-	/*ArtistNode.findOne({'id': id}, {id: 1, username: 1}, function (err, result) {
+/**
+ * Checks if a node with param id is in the database.
+ * If not, it creates one.
+ * Returns the ArtistNode object as second arg in callback
+ * @param  {JSON}   userJSON	soundcloud user object
+ * @param  {Function} callback takes error as 1st arg, result as second
+ * @return {ArtistNode}
+ */
+function queryUser (userJSON, callback) {
+	ArtistNode.findOne({'id': userJSON.id}, {id: 1, username: 1}, function (err, result) {
 		console.log(results);
 		if (result == null) {
 			// create user for DB and return user
-			var newNode = createArtistNode(id);
+			var newNode = createArtistNode(userJSON);
 			callback(null, newNode);
 		}
 		else {
@@ -132,13 +206,14 @@ function findByID (id, callback) {
 			console.log('artist already in DB');
 			callback(null, result);
 		}
-	});*/
+	});
 }
 
-function createArtistNode(userId, userUsername, callback) {
+function createArtistNode(user, callback) {
 	ArtistNode.create({
-		id: userId,
-		username: userUsername
+		id: user.id,
+		username: user.username,
+		permalink: user.permalink
 	}, function (err, result) {
 		return result;
 	});
@@ -154,11 +229,7 @@ function findOutgoingEdges (id, callback) {
 // Count all the edges coming out of a node
 function countOutgoingEdges (id, callback) {
 	Edge.count({'nodeA': id}, function (err, count) {
-<<<<<<< HEAD
-		console.log('count' + count);
-=======
 		console.log('count: ' + count);
->>>>>>> 067e018b3d45c97ac492be0a94249a0587a16417
 		return count;
 	});
 }
@@ -196,7 +267,7 @@ function createEdges (parent, children, callback) {
 }
 
 function depthSearch (user, callback) {
-	//findByID	
+	//queryUser	
 
 }
 
