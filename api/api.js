@@ -148,10 +148,8 @@ function exploreFromRoot (node, depth) {
 	else {
 		// if we don't explore it, mark as a leaf
 		node.leaf = true;
-	}
-		
+	}	
 }
-
 
 
 
@@ -180,6 +178,7 @@ function getSCFavorites (userID, clientID, callback) {
 	request(baseURL + userID + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5', 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var favorites = JSON.parse(body);
+		  	favorites = _.map(favorites, function (song) {return song.user; });
 		  	callback(null, favorites);
 		}
 	});
@@ -189,16 +188,27 @@ function getSCFavorites (userID, clientID, callback) {
  * Checks if a node with param id is in the database.
  * If not, it creates one.
  * Returns the ArtistNode object as second arg in callback
- * @param  {JSON}   userJSON	soundcloud user object
+ * @param  {JSON}   scJSON soundcloud user object
  * @param  {Function} callback takes error as 1st arg, result as second
  * @return {ArtistNode}
  */
-function queryUser (userJSON, callback) {
-	ArtistNode.findOne({'id': userJSON.id}, {id: 1, username: 1}, function (err, result) {
+function queryUser (scJSON, callback) {
+	var user;
+	// There are two types of data that can be given
+	// to this function:
+	// 1. a user object from the soundcloud API
+	// 2. a "track" object from the sounccloud API
+	
+	if(scJSON.kind === "track") 
+		user = scJSON.user;
+	else 
+		user = scJSON;
+
+	ArtistNode.findOne({'id': user.id}, {id: 1, username: 1}, function (err, result) {
 		console.log(results);
 		if (result == null) {
 			// create user for DB and return user
-			var newNode = createArtistNode(userJSON);
+			var newNode = createArtistNode(user);
 			callback(null, newNode);
 		}
 		else {
@@ -208,6 +218,7 @@ function queryUser (userJSON, callback) {
 		}
 	});
 }
+
 
 function createArtistNode(user, callback) {
 	ArtistNode.create({
