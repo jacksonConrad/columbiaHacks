@@ -109,8 +109,9 @@ module.exports = function(app, mongoose) {
 	});
 }
 
-function exploreFromRoot (node, depth) {
+function exploreFromRoot (node, depth, callback) {
 	if (depth != 0) {
+		node.leaf = false;
 		// get array of JSON favorites
 		getSCFavorites(node.id, clientID, function (err, favorites) {
 			_.each(favorites, function (child) {
@@ -123,21 +124,23 @@ function exploreFromRoot (node, depth) {
 							data.nodes.push(result);
 							if (result.leaf) {
 								// if its a leaf, explore
-								exploreFromRoot(result, depth - 1);
+								
+								exploreFromRoot(result, depth - 1, function () {
+									callback(null, 'leaf explored');
+								});
 							}
 							else {
-								return;
+								callback(null, 'already explored');
 							}
 						});
-					},
-					// populate data.edges array
-					function (callback) {
-						//createEdges(node, )
-
 					}], 
 					// final callback
+					// populate data.edges array
 					function (err, results) {
-
+						if (results[0] === 'leaf explored');
+							createEdges(node, favorites, function () {
+								console.log('edges created!');
+							});
 					}
 				);
 			});
@@ -224,7 +227,8 @@ function createArtistNode(user, callback) {
 	ArtistNode.create({
 		id: user.id,
 		username: user.username,
-		permalink: user.permalink
+		permalink: user.permalink,
+		leaf: true
 	}, function (err, result) {
 		return result;
 	});
