@@ -31,6 +31,12 @@ module.exports = function(app, mongoose) {
 			console.log('Root User:');
 			console.log(rootUser);
 
+		var data = {
+			nodes: [],
+			edges: []
+		};
+
+
 			async.series([
 				// call recursive explore function to populate
 				// data.nodes & data.edges
@@ -41,80 +47,17 @@ module.exports = function(app, mongoose) {
 				// final callback
 				function (error, result) {
 					// send data
-					console.log('\n\nFINISHEDDDD!!!!!!!')
-					res.json('1');
+					console.log('here?');
+					res.json(data);
 				}
 			);
 		});
-
-			/*async.series([
-				function (callback) {
-					getSCUser(req.params.username, clientID, function (err, result) {
-						console.log('root node: ');
-						root = result;
-						console.log(root);
-						callback(null, root);					
-					});
-				},
-				function (callback) {
-					console.log('root id: ');
-					console.log(root.id);
-					queryUser(root.id, function (err, result) {
-						node = result;
-						console.log(node);
-						callback(null, node);
-					});
-				},
-				function (callback) {
-					callback(null, 'third');
-				}
-				],
-				function (callback, results) {
-					// aggregate data to send to front end
-					console.log('results');
-					_.each(results, function (thing) {
-						console.log(thing);
-					});
-
-					if ( countOutgoingEdges(results[1].id) ) {
-						// don't process (for now)
-						console.log('outgoing edges exist! dont process');
-					}
-					else {
-						// process favorites
-						console.log('process this users favorite artists');
-						
-						getSCFavorites(node.id, clientID, function (err, children) {
-							data.nodes = children;
-							createEdges(node, children, function () {
-								data.edges = findOutgoingEdges(node.id);
-								console.log('get or create the edges');
-							});
-						});
-					}
-
-					data.nodes.push(node);
-					// data =
-					// 		{
-					// 			nodes: {
-					// 				{}, 
-					// 				{}
-					// 			},
-					// 		
-					// 			edge: {
-					// 				{}, 
-					// 				{}
-					// 			}
-					// 		}
-					res.json(data);
-				}
-			);*/
 	});
 }
 
 function exploreFromRoot (node, depth, callback) {
 	if (depth != 0) {
-		
+		node.leaf = false;
 		// get array of JSON favorites
 		getSCFavorites(node.id, clientID, function (err, favorites) {
 			_.each(favorites, function (child) {
@@ -148,8 +91,7 @@ function exploreFromRoot (node, depth, callback) {
 				);
 			});
 			
-		});
-			
+		});		
 	}
 	else {
 		// if we don't explore it, mark as a leaf
@@ -171,9 +113,8 @@ function getSCUser (permalink, clientID, callback) {
 	request(userURL + permalink + clientID, 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var user = JSON.parse(body);
-		  	//console.log(user);
-
 		  	queryUser(user, function (err, result) {
+
 		  		callback(null, result);
 		  	});
 		}
@@ -218,7 +159,6 @@ function queryUser (scJSON, callback) {
 
 	ArtistNode.findOne({'id': user.id}, {id: 1, username: 1}, function (err, result) {
 		console.log('have we seen you before? -->')
-		console.log(result);
 		if (result == null) {
 			// create user for DB and return user
 			console.log('new user created');
@@ -237,9 +177,7 @@ function queryUser (scJSON, callback) {
 			console.log('artist already in DB');
 			callback(null, result);
 		}
-	});
 }
-
 
 function createArtistNode(user, callback) {
 	ArtistNode.create({
