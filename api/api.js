@@ -16,23 +16,33 @@ var userURL  = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com
 var clientID = '&client_id=ee6c012d3805b479acf430ce6e188fa5';
 var baseURL = 'http://api.soundcloud.com/users/';
 
+var data = {
+			nodes: [],
+			edges: []
+		};
+
 module.exports = function(app, mongoose) {
 
 	// Make recursive API calls to soundcloud
 	// Create graph of connections according to users/:id/followings
 	app.get('/api/user/:username/:depth', function(req, res) {
 
+		getSCUser(req.params.username, clientID, function (err, rootUser){
+			console.log('Root User:');
+			console.log(rootUser);
+
 		var data = {
 			nodes: [],
 			edges: []
 		};
 
-		getSCUser(req.params.username, clientID, function (err, rootUser){
 
 			async.series([
 				// call recursive explore function to populate
 				// data.nodes & data.edges
-				exploreFromRoot(rootUser, req.params.depth)
+				exploreFromRoot(rootUser, req.params.depth, function () {
+					callback(null, 'done!');
+				})
 				],
 				// final callback
 				function (error, result) {
@@ -47,7 +57,6 @@ module.exports = function(app, mongoose) {
 
 function exploreFromRoot (node, depth, callback) {
 	if (depth != 0) {
-
 		node.leaf = false;
 		// get array of JSON favorites
 		getSCFavorites(node.id, clientID, function (err, favorites) {
@@ -104,7 +113,6 @@ function getSCUser (permalink, clientID, callback) {
 	request(userURL + permalink + clientID, 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var user = JSON.parse(body);
-
 		  	queryUser(user, function (err, result) {
 
 		  		callback(null, result);
@@ -116,6 +124,7 @@ function getSCUser (permalink, clientID, callback) {
 function getSCFavorites (userID, clientID, callback) {
 	request(baseURL + userID + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5', 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
+			console.log('in getSCFavorites');
 		  	var favorites = JSON.parse(body);
 		  	favorites = _.map(favorites, function (song) {return song.user; });
 		  	callback(null, favorites);
@@ -133,25 +142,35 @@ function getSCFavorites (userID, clientID, callback) {
  */
 function queryUser (scJSON, callback) {
 	var user;
+	console.log('in queryUser');
 	// There are two types of data that can be given
 	// to this function:
 	// 1. a user object from the soundcloud API
 	// 2. a "track" object from the sounccloud API
 	
-	if(scJSON.kind === "track") {
+	if(scJSON.kind === "track")  {
+		console.log('scJSON.kind = track');
 		user = scJSON.user;
 	}
 	else {
+		console.log('scJSON.kind = user');
 		user = scJSON;
 	}
 
-	var result = ArtistNode.findOne({id: user.id}, {id: 1, username: 1});
-		console.log('artistnode result');
-		console.log(result);
+	ArtistNode.findOne({'id': user.id}, {id: 1, username: 1}, function (err, result) {
+		console.log('have we seen you before? -->')
 		if (result == null) {
 			// create user for DB and return user
-			var newNode = createArtistNode(user);
-			callback(null, newNode);
+			console.log('new user created');
+			createArtistNode(user, function (err, newNode) {
+				console.log('newNode');
+				console.log(newNode);
+				callback(null, newNode);
+			});
+			// var newNode = createArtistNode(user);
+			// console.log('newNode');
+			// console.log(newNode);
+			// callback(null, newNode);
 		}
 		else {
 			// return user
@@ -167,7 +186,7 @@ function createArtistNode(user, callback) {
 		permalink: user.permalink,
 		leaf: true
 	}, function (err, result) {
-		return result;
+		callback(null, result);
 	});
 }
 
