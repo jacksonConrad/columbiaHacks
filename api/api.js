@@ -60,10 +60,42 @@ function exploreFromRoot(node, depth, callback) {
 	// while(depth--) {
 			// console.log('children: ');
 			// console.log(children); console.log('\n');
+			function processNode (child, callback) {
+				async.parallel([
+					function (cb) {
+						queryUser(child, function(err, result) {
+							// if(depth !== 0) {
+							// 	// THIS IS TEMPORARY.
+							// 	// I dont think this changes the node in the DB
+							// 	// since its passing by value.
+							// 	result.leaf = false;
+							// }
+							cb(null, '1');
+						});
+					},
+					function (cb) {
+						getSCFavorites(child.id, clientID, function (err, favorites) {
+							console.log('This user has ' + favorites.length + ' favorites');
+							_.each(favorites, function (f) {
+								temp.push(f);
+							});
+							cb(null);
+						});
+					}], function (err, results) {
+						console.log('parallel processes finished');
+						if (err) return callback(err);
+						callback(null, results[1]);
+					}
+				);
+			}
 			
-			async.each(children, processNode, function (err) {
+			async.each(children, processNode, function (err, results) {
 				console.log('async.each finished;');
 				console.log('depth: ' + depth);
+				console.log('temp');
+				console.log(temp.length);
+				children = temp;
+				temp = [];
 				cb();
 			});
 
@@ -83,31 +115,7 @@ function exploreFromRoot(node, depth, callback) {
 }
 
 
-function processNode (child, callback) {
-	async.parallel([
-		function (cb) {
-			queryUser(child, function(err, result) {
-				// if(depth !== 0) {
-				// 	// THIS IS TEMPORARY.
-				// 	// I dont think this changes the node in the DB
-				// 	// since its passing by value.
-				// 	result.leaf = false;
-				// }
-				cb(null, '1')
-			});
-		},
-		function (cb) {
-			getSCFavorites(child.id, clientID, function (err, favorites) {
-				console.log('This user has ' + favorites.length + ' favorites');
-				cb(null, favorites);
-			});
-		}], function (err, results) {
-			console.log('parallel processes finished');
-			if (err) return callback(err);
-			callback(null, results[1]);
-		}
-	);
-}
+
 
 /*function exploreFromRoot (node, depth, callback) {
 	if (depth != 0) {
