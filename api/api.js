@@ -29,33 +29,87 @@ module.exports = function(app, mongoose) {
 
 		getSCUser(req.params.username, clientID, function (err, rootUser){
 			console.log('Root User:');
-			console.log(rootUser);
-
-		var data = {
-			nodes: [],
-			edges: []
-		};
+			console.log(rootUser); console.log('\n');
 
 
-			async.series([
-				// call recursive explore function to populate
-				// data.nodes & data.edges
-				exploreFromRoot(rootUser, req.params.depth, function () {
-					callback(null, 'done!');
-				})
-				],
-				// final callback
-				function (error, result) {
-					// send data
-					console.log('here?');
-					res.json(data);
-				}
-			);
+			var data = {
+				nodes: [],
+				edges: []
+			};
+
+			// Breadth-first graph search
+			exploreFromRoot(rootUser, req.params.depth, function(results) {
+				console.log('exploreFromRoot executed');
+				res.json('1');
+			});
+
+
+			
 		});
 	});
 }
 
-function exploreFromRoot (node, depth, callback) {
+function exploreFromRoot(node, depth, callback) {
+	var level = depth;
+	var children = [];
+	var temp = [];
+	children.push(node);
+	async.whilst(
+		function () {return depth--;},
+		function (cb) {
+	// while(depth--) {
+			// console.log('children: ');
+			// console.log(children); console.log('\n');
+			
+			async.each(children, processNode, function (err) {
+				console.log('async.each finished;');
+				console.log('depth: ' + depth);
+				cb();
+			});
+
+			// console.log('temp:');
+			// console.log(temp); console.log('\n');
+			// children = temp;
+			// temp = [];
+
+			
+		},
+		// final callback of async.whilst
+		function (err) {
+			console.log('WHILST FINISHED!');
+			callback();
+		}
+	);
+}
+
+
+function processNode (child, callback) {
+	async.parallel([
+		function (cb) {
+			queryUser(child, function(err, result) {
+				// if(depth !== 0) {
+				// 	// THIS IS TEMPORARY.
+				// 	// I dont think this changes the node in the DB
+				// 	// since its passing by value.
+				// 	result.leaf = false;
+				// }
+				cb(null, '1')
+			});
+		},
+		function (cb) {
+			getSCFavorites(child.id, clientID, function (err, favorites) {
+				console.log('This user has ' + favorites.length + ' favorites');
+				cb(null, favorites);
+			});
+		}], function (err, results) {
+			console.log('parallel processes finished');
+			if (err) return callback(err);
+			callback(null, results[1]);
+		}
+	);
+}
+
+/*function exploreFromRoot (node, depth, callback) {
 	if (depth != 0) {
 		node.leaf = false;
 		// get array of JSON favorites
@@ -98,7 +152,7 @@ function exploreFromRoot (node, depth, callback) {
 		node.leaf = true;
 	}	
 }
-
+*/
 
 
 // get user JSON object from soundcloud API
@@ -113,10 +167,11 @@ function getSCUser (permalink, clientID, callback) {
 	request(userURL + permalink + clientID, 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 		  	var user = JSON.parse(body);
-		  	queryUser(user, function (err, result) {
+		  	callback(null, user);
+		  	// queryUser(user, function (err, result) {
 
-		  		callback(null, result);
-		  	});
+		  	// 	callback(null, result);
+		  	// });
 		}
 	});
 }
@@ -149,11 +204,9 @@ function queryUser (scJSON, callback) {
 	// 2. a "track" object from the sounccloud API
 	
 	if(scJSON.kind === "track")  {
-		console.log('scJSON.kind = track');
 		user = scJSON.user;
 	}
 	else {
-		console.log('scJSON.kind = user');
 		user = scJSON;
 	}
 
@@ -177,6 +230,7 @@ function queryUser (scJSON, callback) {
 			console.log('artist already in DB');
 			callback(null, result);
 		}
+	});
 }
 
 function createArtistNode(user, callback) {
