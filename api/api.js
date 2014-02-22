@@ -16,10 +16,10 @@ var userURL  = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com
 var clientID = '&client_id=ee6c012d3805b479acf430ce6e188fa5';
 var baseURL = 'http://api.soundcloud.com/users/';
 
-var data = {
-			nodes: [],
-			edges: []
-		};
+// var data = {
+// 			nodes: [],
+// 			edges: []
+// 		};
 
 module.exports = function(app, mongoose) {
 
@@ -30,27 +30,33 @@ module.exports = function(app, mongoose) {
 		getSCUser(req.params.username, clientID, function (err, rootUser){
 			console.log('Root User:');
 			console.log(rootUser); console.log('\n');
-			// container for the data we will respond with
-			var data = {
-				nodes: [],
-				edges: []
-			};
 
 			// Breadth-first graph search
 			exploreFromRoot(rootUser, req.params.depth, function(results) {
 				console.log('exploreFromRoot executed');
-				res.json('1');
+				res.json(AsyncGraphNodeLib.Response);
+				console.log(AsyncGraphNodeLib.Response);
 			});
 		});
 	});
 }
 
 var AsyncGraphNodeLib = {
+	Response: {
+		nodes: [],
+		edges: []
+	},
 	children: [],
-	reset:  function () {
+	resetChildren:  function () {
 		this.children = [];
 	},
-	append: function(value) {
+	appendNode: function(node) {
+		this.Response.nodes.push(node);
+	},
+	appendEdge: function(edge) {
+		this.Response.edges.push(edge);
+	},
+	appendChild: function(value) {
 		this.children.push(value);
 	},
 	processNode: function(child, callback) {
@@ -66,6 +72,8 @@ var AsyncGraphNodeLib = {
 					// 	// since its passing by value.
 					// 	result.leaf = false;
 					// }
+					that.appendNode(result);
+
 					cb(null, '1');
 				});
 			},
@@ -73,7 +81,7 @@ var AsyncGraphNodeLib = {
 				getSCFavorites(child.id, clientID, function (err, favorites) {
 					console.log('This user has ' + favorites.length + ' favorites');
 					_.each(favorites, function (f) {
-						that.append(f);
+						that.appendChild(f);
 					});
 					// if (depth === 0) 
 					cb(null);
@@ -93,13 +101,9 @@ function exploreFromRoot(node, depth, callback) {
 	var temp = [];
 	children.push(node);
 	async.whilst(
+		// test condition
 		function () {return depth--;},
 		function (cb) {
-	// while(depth--) {
-			// console.log('children: ');
-			// console.log(children); console.log('\n');
-
-
 			// arg 2:  with the help of bind we can attach a context to the iterator function
 			// before passing it to async. Now the 'processNode' function will be executed in its
 			// 'home' AsyncGraphNodeLib context so 'this.children' will be as expected 
@@ -109,7 +113,7 @@ function exploreFromRoot(node, depth, callback) {
 				console.log('temp');
 				console.log(temp.length);
 				children = AsyncGraphNodeLib.children;
-				AsyncGraphNodeLib.reset();
+				AsyncGraphNodeLib.resetChildren();
 				console.log('should be zero: ' + AsyncGraphNodeLib.children.length);
 				cb();
 			});
@@ -313,10 +317,3 @@ function createEdges (parent, children, callback) {
 	});
 	callback();
 }
-
-function depthSearch (user, callback) {
-	//queryUser	
-
-}
-
-
