@@ -30,8 +30,7 @@ module.exports = function(app, mongoose) {
 		getSCUser(req.params.username, clientID, function (err, rootUser){
 			console.log('Root User:');
 			console.log(rootUser); console.log('\n');
-
-
+			// container for the data we will respond with
 			var data = {
 				nodes: [],
 				edges: []
@@ -42,12 +41,51 @@ module.exports = function(app, mongoose) {
 				console.log('exploreFromRoot executed');
 				res.json('1');
 			});
-
-
-			
 		});
 	});
 }
+
+var AsyncGraphNodeLib = {
+	children: [],
+	reset:  function () {
+		this.children = [];
+	},
+	append: function(value) {
+		this.children.push(value);
+	},
+	processNode: function(child, callback) {
+		// now we can refer to AsyncGraphNodeLib inside async.parallel
+		// using 'that'
+		var that = this;
+		async.parallel([
+			function (cb) {
+				queryUser(child, function(err, result) {
+					// if(depth !== 0) {
+					// 	// THIS IS TEMPORARY.
+					// 	// I dont think this changes the node in the DB
+					// 	// since its passing by value.
+					// 	result.leaf = false;
+					// }
+					cb(null, '1');
+				});
+			},
+			function (cb) {
+				getSCFavorites(child.id, clientID, function (err, favorites) {
+					console.log('This user has ' + favorites.length + ' favorites');
+					_.each(favorites, function (f) {
+						that.append(f);
+					});
+					// if (depth === 0) 
+					cb(null);
+				});
+			}], function (err, results) {
+				console.log('parallel processes finished');
+				if (err) return callback(err);
+				callback(null);
+			}
+		);
+	}
+};
 
 function exploreFromRoot(node, depth, callback) {
 	var level = depth;
@@ -60,42 +98,19 @@ function exploreFromRoot(node, depth, callback) {
 	// while(depth--) {
 			// console.log('children: ');
 			// console.log(children); console.log('\n');
-			function processNode (child, callback) {
-				async.parallel([
-					function (cb) {
-						queryUser(child, function(err, result) {
-							// if(depth !== 0) {
-							// 	// THIS IS TEMPORARY.
-							// 	// I dont think this changes the node in the DB
-							// 	// since its passing by value.
-							// 	result.leaf = false;
-							// }
-							cb(null, '1');
-						});
-					},
-					function (cb) {
-						getSCFavorites(child.id, clientID, function (err, favorites) {
-							console.log('This user has ' + favorites.length + ' favorites');
-							_.each(favorites, function (f) {
-								temp.push(f);
-							});
-							cb(null);
-						});
-					}], function (err, results) {
-						console.log('parallel processes finished');
-						if (err) return callback(err);
-						callback(null, results[1]);
-					}
-				);
-			}
-			
-			async.each(children, processNode, function (err, results) {
+
+
+			// arg 2:  with the help of bind we can attach a context to the iterator function
+			// before passing it to async. Now the 'processNode' function will be executed in its
+			// 'home' AsyncGraphNodeLib context so 'this.children' will be as expected 
+			async.each(children, AsyncGraphNodeLib.processNode.bind(AsyncGraphNodeLib), function (err, results) {
 				console.log('async.each finished;');
 				console.log('depth: ' + depth);
 				console.log('temp');
 				console.log(temp.length);
-				children = temp;
-				temp = [];
+				children = AsyncGraphNodeLib.children;
+				AsyncGraphNodeLib.reset();
+				console.log('should be zero: ' + AsyncGraphNodeLib.children.length);
 				cb();
 			});
 
