@@ -18,13 +18,3 @@ display: inline-block;
 text-align: center;
 z-index:1;
 }
-
-.node {
-stroke: #fff;
-stroke-width: 1.5px;
-}
-
-.link {
-stroke: #999;
-stroke-opacity: .6;
-}

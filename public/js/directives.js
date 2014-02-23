@@ -16,18 +16,21 @@ angular.module('myApp.directives', ['d3'])
     		d3Service.d3().then(function(d3) {
 
 	    		var renderTimeout;
+                var width = 960,
+                    height = 500;
 
-					var color = d3.scale.category20();
+                var color = d3.scale.category20();
 
-					var force = d3.layout.force()
-					    .charge(-120)
-					    .linkDistance(20);
-					    //.size([width, height]);
+                var force = d3.layout.force()
+                    .charge(-120)
+                    .linkDistance(30)
+                    .size([width, height]);
 
-					var svg = d3.select("body")
-						.append("svg")
-					  .style("width", "400px")
-					  .style("height", "400px");
+                var svg = d3.select("body").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+
 
 
 	        // Browser onresize event
