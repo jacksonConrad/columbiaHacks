@@ -12,10 +12,9 @@
         <div>
           <soundcloud-graph chart-data="data"></soundcloud-graph>
           <form ng-submit="discover()" class="pure-form">
-            <input type="text" ng-model="user.name" placeholder="enter username">
-            <select type="text" ng-model="user.depth">
-              <option>2</option><option>3</option>
-            </select>
+            <input type="text" ng-model="user" placeholder="enter username">
+            <select class="form-control" ng-model="depth" ng-options="d for d in depths">
+            <option></option></select>
             <input type="submit" id="submit" value="Discover" class="pure-button pure-button-primary">
           </form>
         <div>

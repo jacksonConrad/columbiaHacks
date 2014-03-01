@@ -4,8 +4,12 @@
 
 angular.module('myApp.controllers', ['d3'])
 	.controller('AppCtrl', function ($scope, $http) {
+
+    $scope.depths = [2,3];
+    $scope.depth = $scope.depths[0]; 
+
 		$scope.discover = function() {
-	        $http({ method: 'GET', url: 'api/user/' + $scope.user.name + '/' + $scope.user.depth
+	        $http({ method: 'GET', url: 'api/user/' + $scope.user + '/' + $scope.depth
 				}).success(function (data, status, headers, config) {
 					$scope.data = data;
 				}).error(function (data, status, headers, config) {

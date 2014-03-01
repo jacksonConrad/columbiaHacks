@@ -38,3 +38,10 @@ stroke-width: 1.5px;
 stroke: #999;
 stroke-opacity: .6;
 }
+
+#powered-by {
+margin:0;
+position: fixed;
+right: 0;
+bottom: 0;
+}
