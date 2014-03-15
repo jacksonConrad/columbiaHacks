@@ -7,31 +7,52 @@
 // In this case it is a simple value service.
 angular.module('myApp.services', []).
 	factory('scService', function() {
-		// initialize client with app credentials
+		
 	
-
 	return {
-		init: function () {
+		// initialize client with app credentials
+		/*init: function () {
+			console.log('initializing soundcloud')
 			SC.initialize({
 			  client_id: 'e2e194f256c97b3b526c2ba93db1d19d',
 			  // Only needed for authentication
 			  //redirect_uri: 'REDIRECT_URL'
 			});
-		},
-		createPlaylist: function(tracks, name, callback) {
-			SC.connect(function() {
-			  var t = nodes.map(function(node) { return { id: node.id } });
-			  SC.post('/playlists', {
-			    playlist: { title: name, tracks: t }
-			  });
-			  var playlistURL = 'www.soundcloud.com/discoversc/sets/' + name;
-			  callback(null,playlistURL);
+		},*/
+		// Create playlist based on backend data results
+		createPlaylist: function(data, name, callback) {
+			console.log('creatingPlaylist');
+
+			SC.initialize({
+			  client_id: 'e2e194f256c97b3b526c2ba93db1d19d',
+			  redirect_uri: "http://connect.soundcloud.com/examples/callback.html"
+			  // Only needed for authentication
+			  //redirect_uri: 'REDIRECT_URL'
 			});
+			
+			var tracks = [];
+
+
+
+			tracks = data.nodes.map(function(node) { return  {id: node.id} } );
+			console.dir(tracks);
+			SC.connect(function () {
+				console.log("CONNECTED");
+				SC.post('/playlists', {
+					    playlist: { title: name, tracks: tracks }
+					}, function(err) {
+
+					if (err) {console.dir(err)}
+					var playlistURL = 'www.soundcloud.com/discoversc/sets/' + name;
+			  		console.log("playlistURL: " + playlistURL);
+			  		callback(null, playlistURL);
+			  	});
+			});
+			  
+			  
+
 		}
 	}
-
-
-
 	});
 	/*factory('tweetService', function($resource) {
 		return $resource('/api/getlast/:number', {}, {
