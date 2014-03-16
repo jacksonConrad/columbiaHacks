@@ -50,19 +50,10 @@ require('./api/api.js')(app, mongoose);
 
 // redirect all others to the index (HTML5 history)
 // essentially links up all the angularjs partials with their respective paths
-app.get("/", function(req, res, next) {
+app.all("/*", function(req, res, next) {
   //console.log('loading page');
-  	res.sendfile("index.html", { root: __dirname + "/public" });
+  res.sendfile("index.html", { root: __dirname + "/public" });
 });
-
-app.get("/callback", function(req,res, next) {
-	  console.log(req.route.path);
-  	res.sendfile("callback.html", {root: __dirname + "/public" })
-  
-});
-
-
-
 
 // LAUNCH *********************************************/
 

@@ -25,20 +25,36 @@ angular.module('myApp.services', []).
 
 			SC.initialize({
 			  client_id: 'e2e194f256c97b3b526c2ba93db1d19d',
-			  redirect_uri: "http://connect.soundcloud.com/examples/callback.html"
+			  redirect_uri: "http://localhost:3000/callback.html"
 			  // Only needed for authentication
 			  //redirect_uri: 'REDIRECT_URL'
 			});
 			
 			var tracks = [];
 
+		/*	// initiate auth popup
+			SC.connect(function() {
+			  SC.get('/me', function(me) { 
+			    alert('Hello, ' + me.username); 
+			  });
+			});
+*/
 
 
-			tracks = data.nodes.map(function(node) { return  {id: node.id} } );
+			tracks = data.nodes.map(function(node) { return  {id: node.song} } );
+
 			console.dir(tracks);
 			SC.connect(function () {
 				console.log("CONNECTED");
+				//var tracks = [49298, 2011697, 7041149].map(function(id) { return { id: id } });
 				SC.post('/playlists', {
+					playlist: { title: 'My Playlist', tracks: tracks }
+				}, function() {
+					callback(null, "www.soundcloud.com/musicbyconrad/sets/my-playlist");
+				});
+
+				 
+				/*SC.post('/playlists', {
 					    playlist: { title: name, tracks: tracks }
 					}, function(err) {
 
@@ -46,7 +62,7 @@ angular.module('myApp.services', []).
 					var playlistURL = 'www.soundcloud.com/discoversc/sets/' + name;
 			  		console.log("playlistURL: " + playlistURL);
 			  		callback(null, playlistURL);
-			  	});
+			  	});*/
 			});
 			  
 			  

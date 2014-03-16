@@ -21,10 +21,6 @@ angular.module('myApp.controllers', ['d3'])
                 console.log(playlistURL);
                 $scope.playlistURL = playlistURL;
               }
-
-
-
-
             
           });
           
