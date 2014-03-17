@@ -30,7 +30,7 @@ angular.module('myApp.services', []).
 				console.log("CONNECTED");
 				var user;
 				//Dummy tracks
-				var tracks = data.nodes.map(function(node) { return  {id: node.song} } );
+				var tracks = data.nodes.map(function(node) { return  {id: node.songID} } );
 				console.log("tracks: ");
 				console.dir(tracks);
 				SC.get('/me', function (me) {

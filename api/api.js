@@ -6,20 +6,9 @@ async       = require('async'),
 ArtistNode  = require('./models/ArtistNode'),
 Edge        = require('./models/Edge');
 
-
-// Require our custom soundcloud and graph functions
-//
-// require(./graphAPI);
-// require(./soundcloudAPI);
-
 var userURL  = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/';
 var clientID = '&client_id=ee6c012d3805b479acf430ce6e188fa5';
 var baseURL = 'http://api.soundcloud.com/users/';
-
-// var data = {
-// 			nodes: [],
-// 			edges: []
-// 		};
 
 module.exports = function(app, mongoose) {
 
@@ -72,9 +61,10 @@ var AsyncGraphNodeLib = {
 					// 	// since its passing by value.
 					// 	result.leaf = false;
 					// }
-					if(result.song !== null)
-						that.appendNode(result);
 					
+					if(result.songID !== null)
+						that.appendNode(result);
+
 					console.log("IN QUERY USER");
 					console.log(result);
 
@@ -83,14 +73,10 @@ var AsyncGraphNodeLib = {
 			},
 			function (cb) {
 				getSCFavorites(child.id, clientID, function (err, favorites) {
-					console.log('This user has ' + favorites.length + ' favorites');
+					//console.log('This user has ' + favorites.length + ' favorites');
 					_.each(favorites, function (f) {
-						console.log("appending teh child!");
 						that.appendChild(f);
-						console.log(child);
-						console.log(f);
 					});
-					// if (depth === 0) 
 					cb(null);
 				});
 			}], function (err, results) {
@@ -103,9 +89,9 @@ var AsyncGraphNodeLib = {
 	addNode: function(child, callback) {
 		var that = this;
 		queryUser(child, function(err, result) {
-			that.appendNode(result);
-			console.log("in addNode");
-			console.log(result);
+			if(result.songID !== null)
+				that.appendNode(result);
+
 			callback(null);
 		});
 	}
@@ -118,37 +104,29 @@ function exploreFromRoot(node, depth, callback) {
 	children.push(node);
 	async.whilst(
 		// test condition
-		function () {return depth--;},
+		function () {return level--;},
 		function (cb) {
+
+			console.log('depth: ' + level);
 			// arg 2:  with the help of bind we can attach a context to the iterator function
 			// before passing it to async. Now the 'processNode' function will be executed in its
 			// 'home' AsyncGraphNodeLib context so 'this.children' will be as expected 
-			if( depth != 0) {
+			if( level != 0) {
 				async.each(children, AsyncGraphNodeLib.processNode.bind(AsyncGraphNodeLib), function (err, results) {
 					console.log('async.each finished;');
-					console.log('depth: ' + depth);
-					console.log('temp');
-					console.log(temp.length);
 					children = AsyncGraphNodeLib.children;
 					AsyncGraphNodeLib.resetChildren();
-					console.log('should be zero: ' + AsyncGraphNodeLib.children.length);
 					cb();
 				});
 			}
 			else {
 				async.each(children, AsyncGraphNodeLib.addNode.bind(AsyncGraphNodeLib), function (err, results) {
 					console.log("ASYNC EACH FOR ADD NODE FINISHED");
-					console.log('depth: ' + depth);
 					cb();
+					AsyncGraphNodeLib.resetChildren();
+					children = [];
 				});
 			}
-
-			// console.log('temp:');
-			// console.log(temp); console.log('\n');
-			// children = temp;
-			// temp = [];
-
-			
 		},
 		// final callback of async.whilst
 		function (err) {
@@ -231,10 +209,8 @@ function getSCUser (permalink, clientID, callback) {
 function getSCFavorites (userID, clientID, callback) {
 	request(baseURL + userID + '/favorites.json?client_id=ee6c012d3805b479acf430ce6e188fa5', 'json', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
-			console.log('in getSCFavorites');
 		  	var favorites = JSON.parse(body);
 		  	favorites = _.map(favorites, function (song) {return {user: song.user, id: song.id} });
-		  	console.log("before callback in sc faves");
 		  	callback(null, favorites);
 		}
 	});
@@ -250,14 +226,11 @@ function getSCFavorites (userID, clientID, callback) {
  */
 function queryUser (scJSON, callback) {
 	var user;
-	console.log('in queryUser');
-	console.log(scJSON);
 
-	function Node (username, userID, permalink, songs, songID) {
+	function Node (username, userID, permalink, songID) {
 		this.username = username;
 		this.userID = userID; 
 		this.permalink = permalink; 
-		this.songs = songs || [];
 		this.songID = songID || null;
 	}
 
@@ -269,16 +242,18 @@ function queryUser (scJSON, callback) {
 	
 	if("user" in scJSON)  {
 		user = scJSON.user;
-		node = new Node(user.username, user.id, user.permalink, [], scJSON.id);
+		node = new Node(user.username, user.id, user.permalink, scJSON.id);
 	}
 	else {
 		user = scJSON;
-		node = new Node(user.username, user.id, user.permalink, [], null);
-		
-	
+		node = new Node(user.username, user.id, user.permalink, null);
 	}
 
-	ArtistNode.findOne({'id': user.id}, {id: 1, username: 1, song: 1}, function (err, result) {
+	callback(null, node);
+
+
+
+	/*ArtistNode.findOne({'id': user.id}, {id: 1, username: 1, song: 1}, function (err, result) {
 		console.log('have we seen you before? -->')
 		if (result == null) {
 			// create user for DB and return user
@@ -305,10 +280,10 @@ function queryUser (scJSON, callback) {
 			console.log('artist already in DB');
 			callback(null, result);
 		}
-	});
+	});*/
 }
 
-function createArtistNode(user, callback) {
+/*function createArtistNode(user, callback) {
 	ArtistNode.create({
 		id: user.id,
 		username: user.username,
@@ -320,7 +295,7 @@ function createArtistNode(user, callback) {
 		callback(null, result);
 	});
 }
-
+*/
 // Find all the edges coming out of a node
 function findOutgoingEdges (id, callback) {
 	Edge.find({'nodeA': id}, 'nodeA nodeB weight', function (err, result) {
