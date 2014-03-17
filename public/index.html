@@ -9,17 +9,24 @@
 	</head>
 	<body>
 		<div ng-controller="AppCtrl">
-        <div>
-          <soundcloud-graph chart-data="data"></soundcloud-graph>
-          <form ng-submit="discover()" class="pure-form">
-            <input type="text" ng-model="user" placeholder="enter username">
-            <select class="form-control" ng-model="depth" ng-options="d for d in depths">
-            <option></option></select>
-            <input type="submit" id="submit" value="Discover" class="pure-button pure-button-primary">
-          </form>
-        <div>
-        <p id="powered-by">Powered by <a href="http://developers.soundcloud.com/">SoundCloud</a></p>
-	      </div>
+      <div class="pure-g-r">
+        <form ng-submit="discover()" class="pure-form pure-u-1-1">
+          <input type="text" ng-model="user" placeholder="enter username">
+          <select class="form-control" ng-model="depth" ng-options="d for d in depths">
+          <option></option></select>
+          <input type="submit" id="submit" value="Discover" class="pure-button pure-button-primary">
+        </form>
+      </div>
+      <div class="pure-g-r">
+        <div id="graph" class="pure-u-2-3">
+          <soundcloud-graph chart-data="data" ></soundcloud-graph>
+        </div>
+        <div id="soundcloud-widget" class="pure-u-1-3"></div>
+      </div>
+      <div class="pure-g-r">
+        <div class="pure-u-1-1">
+          <p id="powered-by">Powered by <a href="http://developers.soundcloud.com/">SoundCloud</a></p>
+        </div>
       </div>
     </div>
   </body>
