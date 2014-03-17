@@ -10,11 +10,12 @@ angular.module('myApp.controllers', ['d3'])
 
 		$scope.discover = function() {
 	        $http({ method: 'GET', url: 'api/user/' + $scope.user + '/' + $scope.depth
-				}).success(function (data, status, headers, config) {
+            }).success(function (data, status, headers, config) {
 					$scope.data = data;
           // initialize soundcloud
-          //scService.init();
-          scService.createPlaylist(data, $scope.user, function(err, playlistURL) {
+          scService.init();
+          scService.openWidget();
+/*          scService.createPlaylist(data, $scope.user, function(err, playlistURL) {
               if (err)
                 console.log("ERR: couldn't create playlist");
               else {
@@ -22,13 +23,8 @@ angular.module('myApp.controllers', ['d3'])
                 $scope.playlistURL = playlistURL;
               }
             
-          });
+          });*/
           
-
-
-
-
-
 				}).error(function (data, status, headers, config) {
 				$scope.name = 'Error!'
 			});

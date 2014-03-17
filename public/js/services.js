@@ -8,28 +8,20 @@
 angular.module('myApp.services', []).
 	factory('scService', function() {
 		
-	
 	return {
 		// initialize client with app credentials
-		/*init: function () {
+		init: function () {
 			console.log('initializing soundcloud')
 			SC.initialize({
 			  client_id: 'e2e194f256c97b3b526c2ba93db1d19d',
-			  // Only needed for authentication
-			  //redirect_uri: 'REDIRECT_URL'
+			  redirect_uri: "http://localhost:3000/callback.html"
 			});
-		},*/
+		},
+
 		// Create playlist based on backend data results
 		createPlaylist: function(data, name, callback) {
 			console.log('creatingPlaylist');
 
-			SC.initialize({
-			  client_id: 'e2e194f256c97b3b526c2ba93db1d19d',
-			  redirect_uri: "http://localhost:3000/callback.html"
-			  // Only needed for authentication
-			  //redirect_uri: 'REDIRECT_URL'
-			});
-			
 			var tracks = [];
 
 		/*	// initiate auth popup
@@ -39,8 +31,6 @@ angular.module('myApp.services', []).
 			  });
 			});
 */
-
-
 			tracks = data.nodes.map(function(node) { return  {id: node.song} } );
 
 			console.dir(tracks);
@@ -63,13 +53,18 @@ angular.module('myApp.services', []).
 			  		console.log("playlistURL: " + playlistURL);
 			  		callback(null, playlistURL);
 			  	});*/
-			});
-			  
-			  
-
+			});	  
+		},
+		
+		// Creates dummy widget - should feed in set name here
+		openWidget: function() {       
+            var track_url = 'https://soundcloud.com/neus/sets/noises';
+            SC.oEmbed(track_url, { auto_play: false }, document.getElementById("soundcloud-widget"));
 		}
 	}
 	});
+
+//EXAMPLE
 	/*factory('tweetService', function($resource) {
 		return $resource('/api/getlast/:number', {}, {
 			// Use this method for getting a list of tweets
