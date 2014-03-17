@@ -22,44 +22,25 @@ angular.module('myApp.services', []).
 		createPlaylist: function(data, name, callback) {
 			console.log('creatingPlaylist');
 
-			var tracks = [];
+			//var tracks = [];
+			//tracks = data.nodes.map(function(node) { return  {id: node.song} } );
+			//console.log("tracks: " + tracks);
 
-		/*	// initiate auth popup
-			SC.connect(function() {
-			  SC.get('/me', function(me) { 
-			    alert('Hello, ' + me.username); 
-			  });
-			});
-*/
-			tracks = data.nodes.map(function(node) { return  {id: node.song} } );
-
-			console.dir(tracks);
 			SC.connect(function () {
 				console.log("CONNECTED");
 				var user;
-				//var tracks = [49298, 2011697, 7041149].map(function(id) { return { id: id } });
+				//Dummy tracks
+				var tracks = [49298, 2011697, 7041149].map(function(id) { return { id: id } });
 				SC.get('/me', function (me) {
 					console.dir(me);
 					user = me.permalink;
 					SC.post('/playlists', {
 						playlist: { title: name, tracks: tracks }
 						}, function() {
-							callback(null, "www.soundcloud.com/" + user + "/sets/" + name);
+							callback(null, "https://www.soundcloud.com/" + user + "/sets/" + name);
 						}
 					);
 				});
-				
-
-				 
-				/*SC.post('/playlists', {
-					    playlist: { title: name, tracks: tracks }
-					}, function(err) {
-
-					if (err) {console.dir(err)}
-					var playlistURL = 'www.soundcloud.com/discoversc/sets/' + name;
-			  		console.log("playlistURL: " + playlistURL);
-			  		callback(null, playlistURL);
-			  	});*/
 			});	  
 		},
 		

@@ -50,7 +50,7 @@ require('./api/api.js')(app, mongoose);
 
 // redirect all others to the index (HTML5 history)
 // essentially links up all the angularjs partials with their respective paths
-app.all("/*", function(req, res, next) {
+app.get("/*", function(req, res, next) {
   //console.log('loading page');
   res.sendfile("index.html", { root: __dirname + "/public" });
 });
