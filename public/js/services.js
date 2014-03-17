@@ -23,14 +23,16 @@ angular.module('myApp.services', []).
 			console.log('creatingPlaylist');
 
 			//var tracks = [];
-			//tracks = data.nodes.map(function(node) { return  {id: node.song} } );
+			//
 			//console.log("tracks: " + tracks);
 
 			SC.connect(function () {
 				console.log("CONNECTED");
 				var user;
 				//Dummy tracks
-				var tracks = [49298, 2011697, 7041149].map(function(id) { return { id: id } });
+				var tracks = data.nodes.map(function(node) { return  {id: node.song} } );
+				console.log("tracks: ");
+				console.dir(tracks);
 				SC.get('/me', function (me) {
 					console.dir(me);
 					user = me.permalink;

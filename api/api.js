@@ -72,7 +72,9 @@ var AsyncGraphNodeLib = {
 					// 	// since its passing by value.
 					// 	result.leaf = false;
 					// }
-					that.appendNode(result);
+					if(result.song !== null)
+						that.appendNode(result);
+					
 					console.log("IN QUERY USER");
 					console.log(result);
 
