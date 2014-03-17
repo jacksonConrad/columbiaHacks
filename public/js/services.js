@@ -46,12 +46,19 @@ angular.module('myApp.services', []).
 			console.dir(tracks);
 			SC.connect(function () {
 				console.log("CONNECTED");
+				var user;
 				//var tracks = [49298, 2011697, 7041149].map(function(id) { return { id: id } });
-				SC.post('/playlists', {
-					playlist: { title: 'My Playlist', tracks: tracks }
-				}, function() {
-					callback(null, "www.soundcloud.com/musicbyconrad/sets/my-playlist");
+				SC.get('/me', function (me) {
+					console.dir(me);
+					user = me.permalink;
+					SC.post('/playlists', {
+						playlist: { title: name, tracks: tracks }
+						}, function() {
+							callback(null, "www.soundcloud.com/" + user + "/sets/" + name);
+						}
+					);
 				});
+				
 
 				 
 				/*SC.post('/playlists', {

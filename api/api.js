@@ -73,6 +73,8 @@ var AsyncGraphNodeLib = {
 					// 	result.leaf = false;
 					// }
 					that.appendNode(result);
+					console.log("IN QUERY USER");
+					console.log(result);
 
 					cb(null, '1');
 				});
@@ -81,7 +83,10 @@ var AsyncGraphNodeLib = {
 				getSCFavorites(child.id, clientID, function (err, favorites) {
 					console.log('This user has ' + favorites.length + ' favorites');
 					_.each(favorites, function (f) {
+						console.log("appending teh child!");
 						that.appendChild(f);
+						console.log(child);
+						console.log(f);
 					});
 					// if (depth === 0) 
 					cb(null);
@@ -92,6 +97,15 @@ var AsyncGraphNodeLib = {
 				callback(null);
 			}
 		);
+	},
+	addNode: function(child, callback) {
+		var that = this;
+		queryUser(child, function(err, result) {
+			that.appendNode(result);
+			console.log("in addNode");
+			console.log(result);
+			callback(null);
+		});
 	}
 };
 
@@ -107,16 +121,25 @@ function exploreFromRoot(node, depth, callback) {
 			// arg 2:  with the help of bind we can attach a context to the iterator function
 			// before passing it to async. Now the 'processNode' function will be executed in its
 			// 'home' AsyncGraphNodeLib context so 'this.children' will be as expected 
-			async.each(children, AsyncGraphNodeLib.processNode.bind(AsyncGraphNodeLib), function (err, results) {
-				console.log('async.each finished;');
-				console.log('depth: ' + depth);
-				console.log('temp');
-				console.log(temp.length);
-				children = AsyncGraphNodeLib.children;
-				AsyncGraphNodeLib.resetChildren();
-				console.log('should be zero: ' + AsyncGraphNodeLib.children.length);
-				cb();
-			});
+			if( depth != 0) {
+				async.each(children, AsyncGraphNodeLib.processNode.bind(AsyncGraphNodeLib), function (err, results) {
+					console.log('async.each finished;');
+					console.log('depth: ' + depth);
+					console.log('temp');
+					console.log(temp.length);
+					children = AsyncGraphNodeLib.children;
+					AsyncGraphNodeLib.resetChildren();
+					console.log('should be zero: ' + AsyncGraphNodeLib.children.length);
+					cb();
+				});
+			}
+			else {
+				async.each(children, AsyncGraphNodeLib.addNode.bind(AsyncGraphNodeLib), function (err, results) {
+					console.log("ASYNC EACH FOR ADD NODE FINISHED");
+					console.log('depth: ' + depth);
+					cb();
+				});
+			}
 
 			// console.log('temp:');
 			// console.log(temp); console.log('\n');
@@ -208,7 +231,8 @@ function getSCFavorites (userID, clientID, callback) {
 		if (!error && response.statusCode == 200) {
 			console.log('in getSCFavorites');
 		  	var favorites = JSON.parse(body);
-		  	favorites = _.map(favorites, function (song) {return song.user; });
+		  	favorites = _.map(favorites, function (song) {return {user: song.user, id: song.id} });
+		  	console.log("before callback in sc faves");
 		  	callback(null, favorites);
 		}
 	});
@@ -225,26 +249,43 @@ function getSCFavorites (userID, clientID, callback) {
 function queryUser (scJSON, callback) {
 	var user;
 	console.log('in queryUser');
+	console.log(scJSON);
+
+	function Node (username, userID, permalink, songs, songID) {
+		this.username = username;
+		this.userID = userID; 
+		this.permalink = permalink; 
+		this.songs = songs || [];
+		this.songID = songID || null;
+	}
+
+	var node = {};
 	// There are two types of data that can be given
 	// to this function:
 	// 1. a user object from the soundcloud API
 	// 2. a "track" object from the sounccloud API
 	
-	if(scJSON.kind === "track")  {
+	if("user" in scJSON)  {
 		user = scJSON.user;
+		node = new Node(user.username, user.id, user.permalink, [], scJSON.id);
 	}
 	else {
 		user = scJSON;
+		node = new Node(user.username, user.id, user.permalink, [], null);
+		
+	
 	}
 
-	ArtistNode.findOne({'id': user.id}, {id: 1, username: 1}, function (err, result) {
+	ArtistNode.findOne({'id': user.id}, {id: 1, username: 1, song: 1}, function (err, result) {
 		console.log('have we seen you before? -->')
 		if (result == null) {
 			// create user for DB and return user
 			console.log('new user created');
 			createArtistNode(user, function (err, newNode) {
 				console.log('newNode');
-				console.log(newNode);
+				//console.log(newNode);
+				newNode.song = node.songID;
+				console.log("NewNode: " + newNode);
 				callback(null, newNode);
 			});
 			// var newNode = createArtistNode(user);
@@ -254,6 +295,11 @@ function queryUser (scJSON, callback) {
 		}
 		else {
 			// return user
+			if("user" in scJSON) {
+				console.log("TRACK");
+				result.song = scJSON.id;
+			}
+			
 			console.log('artist already in DB');
 			callback(null, result);
 		}
@@ -265,7 +311,9 @@ function createArtistNode(user, callback) {
 		id: user.id,
 		username: user.username,
 		permalink: user.permalink,
-		leaf: true
+		leaf: true,
+		songs: [],
+		song: null
 	}, function (err, result) {
 		callback(null, result);
 	});
