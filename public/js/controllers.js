@@ -14,16 +14,15 @@ angular.module('myApp.controllers', ['d3'])
 					$scope.data = data;
           // initialize soundcloud
           scService.init();
-          scService.openWidget();
-/*          scService.createPlaylist(data, $scope.user, function(err, playlistURL) {
+          scService.createPlaylist(data, $scope.user, function(err, playlistURL) {
               if (err)
                 console.log("ERR: couldn't create playlist");
               else {
                 console.log(playlistURL);
                 $scope.playlistURL = playlistURL;
               }
-            
-          });*/
+            scService.openWidget(playlistURL);
+          });
           
 				}).error(function (data, status, headers, config) {
 				$scope.name = 'Error!'

@@ -64,9 +64,8 @@ angular.module('myApp.services', []).
 		},
 		
 		// Creates dummy widget - should feed in set name here
-		openWidget: function() {       
-            var track_url = 'https://soundcloud.com/neus/sets/noises';
-            SC.oEmbed(track_url, { auto_play: false }, document.getElementById("soundcloud-widget"));
+		openWidget: function(playlist_url) {       
+            SC.oEmbed(playlist_url, { auto_play: false }, document.getElementById("soundcloud-widget"));
 		}
 	}
 	});
